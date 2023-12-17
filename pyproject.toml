@@ -1,0 +1,13 @@
+[project]
+name = "aoc_utils"
+version = "0.0.1"
+description = "AOC utils"
+requires-python = ">=3.10"
+dependencies = ["rich", "requests"]
+
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,14 @@
+venv/
+.env
+.vscode
+.mypy_cache/
+input
+*.egg-info
+__pycache__
+input.txt
+puzzle.md
+*.pkl
+test_input*
+test_input.txt
+grid_output.png
+*.ignore
