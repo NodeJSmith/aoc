@@ -15,12 +15,19 @@ TEST_INPUT_FILE = "test_input"
 INPUT_FILE = "input"
 
 
+def point_out_of_bounds(point: tuple[int, int], data: np.ndarray):
+    return point[0] < 0 or point[1] < 0 or point[0] >= len(data[0]) or point[1] >= len(data)
+
+
 def move_cursor_up(lines):
     sys.stdout.write(f"\033[{lines}A")
 
 
 def print_colored_array(
-    array: np.ndarray, grid: np.ndarray, colored_points: dict[tuple[int, int], str] = None, reset_cursor: bool = True
+    array: np.ndarray,
+    grid: np.ndarray = None,
+    colored_points: dict[tuple[int, int], str] = None,
+    reset_cursor: bool = True,
 ):
     """
     Prints out a NumPy array with specific points colored.
@@ -42,7 +49,7 @@ def print_colored_array(
             value = str(array[y, x])
             if point in colored_points:
                 output.append(value, style=f"bold {colored_points[point]}")
-            elif grid[point] == 1:
+            elif grid is not None and not point_out_of_bounds(point, grid) and grid[point] == 1:
                 output.append(value, style="bold blue")
             else:
                 output.append(value)
