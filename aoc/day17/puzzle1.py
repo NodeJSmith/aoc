@@ -1,20 +1,12 @@
-import random
-import time
 from argparse import ArgumentParser
-from collections import Counter, defaultdict
+from collections import defaultdict
 from enum import Enum
 from heapq import heappop, heappush
-from itertools import count
 from pathlib import Path
-from time import sleep
-from typing import Any
 
-import networkx as nx
 import numpy as np
-from networkx import DiGraph
-from networkx.algorithms.shortest_paths.weighted import _weight_function
 
-from aoc_utils import get_data, print_colored_array
+from aoc_utils import get_data, point_out_of_bounds, print_colored_array
 
 parser = ArgumentParser()
 
@@ -39,173 +31,81 @@ CHOICE_MAP = {
 }
 
 
-def point_out_of_bounds(point: tuple[int, int], data: np.ndarray):
-    return point[0] < 0 or point[1] < 0 or point[0] >= len(data[0]) or point[1] >= len(data)
-
-
-def get_path(curnode, parent, explored):
-    path = [curnode]
-    node = parent
+def get_path(curr_node, tracked):
+    path = [curr_node]
+    node = tracked[curr_node]
     while node is not None:
         path.append(node)
-        node = explored[node]
+        node = tracked.get(node)
     return path
 
 
-def get_heat_loss(
-    neighbor: tuple[int, int],
-    curr_node: tuple[int, int],
-    explored: dict[tuple[int, int], tuple[int, int]],
-    data: np.ndarray,
-):
-    if curr_node is None:
-        return 0
-
-    path = get_path(curr_node, explored[curr_node], explored)
-
-    heat_loss = int(data[neighbor])
-
-    for node in path:
-        heat_loss += int(data[node])
-
-    return heat_loss
-
-
-def can_continue(parent: tuple[int, int], curr_node: tuple[int, int], proposed_node: tuple[int, int]) -> bool:
-    if not parent:
-        return True
-
-    if len(set([parent, curr_node, proposed_node])) < 3:
-        return False
-    # Determine directions of the last two moves
-    last_direction = Direction((proposed_node[1] - curr_node[1], proposed_node[0] - curr_node[0]))
-    second_last_direction = Direction((curr_node[1] - parent[1], curr_node[0] - parent[0]))
-
-    # Check if the next move continues in the same direction
-    return not (last_direction == second_last_direction)
-
-
-def my_astar_path(G, source, target, weight="weight", data: np.ndarray = None):
-    if source not in G or target not in G:
-        msg = f"Either source {source} or target {target} is not in G"
-        raise nx.NodeNotFound(msg)
-
+def get_min_heat_loss(data: np.ndarray, source: tuple[int, int], target: tuple[int, int]):
     push = heappush
     pop = heappop
-    weight = _weight_function(G, weight)
 
-    G_succ: dict[tuple[int, int], dict] = G._adj  # For speed-up (and works for both directed and undirected graphs)
+    start_item = (source, Direction.RIGHT.value, 0)
 
-    # The queue stores priority, node, cost to reach, and parent.
-    # Uses Python heapq to keep in priority order.
-    # Add a counter to the queue to prevent the underlying heap from
-    # attempting to compare the nodes themselves. The hash breaks ties in the
-    # priority and is guaranteed unique for all nodes in the graph.
-    c = count()
-    queue = [(0, next(c), source, 0, None)]
+    queue = [(0, *start_item)]
+    tracked: dict[tuple[int, tuple[int, int], Direction, int], int] = defaultdict(lambda: 10_000)
 
-    # Maps enqueued nodes to distance of discovered paths and the
-    # computed heuristics to target. We avoid computing the heuristics
-    # more than once and inserting the node into the queue too many times.
-    enqueued = {}
-    # Maps explored nodes to parent closest to the source.
-    explored = {}
+    path = {start_item: None}
+    tracked[start_item] = 0
 
     reset_cursor = False
     while queue:
         # Pop the smallest item from queue.
-        _, __, curnode, dist, parent = pop(queue)
+        heat_loss, curr_node, direction, consecutive = pop(queue)
 
-        if curnode == target:
-            path = get_path(curnode, parent, explored)
-            path.reverse()
-            return path
-
-        if curnode in explored:
-            # Do not override the parent of starting node
-            if explored[curnode] is None:
-                continue
-
-            # Skip bad paths that were enqueued before finding a better one
-            enqueued_cost = enqueued[curnode]
-            if enqueued_cost < dist:
-                continue
-
-        explored[curnode] = parent
+        if curr_node == target:
+            print_path(data, path, reset_cursor, curr_node, direction, consecutive)
+            return heat_loss
 
         if args.print:
-            time.sleep(0.1)
-            path = get_path(curnode, parent, explored)
-
-            colored_points = {k: "blue" for k in explored}
-            colored_points.update({k: "red" for k in path})
-            colored_points.update({curnode: "green"})
-
-            print_colored_array(data, None, colored_points, reset_cursor=reset_cursor)
+            # time.sleep(0.1)
+            print_path(data, path, reset_cursor, curr_node, direction, consecutive)
             reset_cursor = True
 
-        for neighbor, _ in G_succ[curnode].items():
-            heat_loss = get_heat_loss(neighbor, curnode, explored, data)
-            if heat_loss is None:
-                continue
-            combined_cost = heat_loss  # + dist
-
-            if neighbor in enqueued:
-                if enqueued[neighbor] > combined_cost:
-                    enqueued[neighbor] = combined_cost
+        for new_direction in CHOICE_MAP[Direction(direction)]:
+            if direction == new_direction.value:
+                if consecutive == 3:
+                    continue
+                else:
+                    new_consecutive = consecutive + 1
             else:
-                enqueued[neighbor] = combined_cost
+                new_consecutive = 1
 
-            if can_continue(parent, curnode, neighbor):
-                push(queue, (combined_cost, next(c), neighbor, combined_cost, curnode))
+            neighbor = tuple(np.add(curr_node, new_direction.value))
+            if point_out_of_bounds(neighbor, data):
+                continue
 
-    raise nx.NetworkXNoPath(f"Node {target} not reachable from {source}")
+            new_heat_loss = heat_loss + int(data[neighbor])
+
+            new_item = (neighbor, new_direction.value, new_consecutive)
+            if new_heat_loss < tracked[new_item]:
+                tracked[new_item] = new_heat_loss
+                path[new_item] = (curr_node, direction, consecutive)
+                push(queue, (new_heat_loss, *new_item))
 
 
-def find_shortest_path(graph: DiGraph, data: np.ndarray):
+def print_path(data, path, reset_cursor, curr_node, direction, consecutive):
+    curr_path = get_path((curr_node, direction, consecutive), path)
+
+    # colored_points = {k: "blue" for k in explored}
+    colored_points = {k[0]: "red" for k in curr_path}
+    colored_points.update({curr_node: "green"})
+
+    print_colored_array(data, None, colored_points, reset_cursor=reset_cursor)
+    reset_cursor = True
+
+
+def find_shortest_path(data: np.ndarray):
     start_point = (0, 0)
     end_point = (len(data[0]) - 1, len(data) - 1)
-    astar_path = my_astar_path(graph, start_point, end_point, data=data)
 
-    for i in astar_path:
-        print(i)
+    min_val = get_min_heat_loss(data, start_point, end_point)
 
-    if args.print:
-        colored_points = {k: "red" for k in astar_path}
-        print_colored_array(data, None, colored_points, reset_cursor=True)
-
-    return len(astar_path) - 1
-
-
-def convert_grid_to_graph(data: np.ndarray) -> DiGraph:
-    graph = DiGraph()
-
-    it = np.nditer(data, flags=["multi_index"])
-    for x in it:
-        graph.add_node(it.multi_index, weight=int(x))
-
-    reset_cursor = False
-    for i in range(len(data[0])):
-        for j in range(len(data)):
-            curr_node = (i, j)
-            edges = []
-            for direction in Direction:
-                potential_edge = tuple(np.add(curr_node, direction.value))
-                if not point_out_of_bounds(potential_edge, data):
-                    edges.append(potential_edge)
-
-            for edge in edges:
-                weight = graph.nodes[edge]["weight"]
-                graph.add_edge(curr_node, edge, weight=weight)
-
-            # if args.print:
-            #     time.sleep(0.01)
-            #     colored_points = {k: "red" for k in edges}
-            #     colored_points[curr_node] = "green"
-            #     print_colored_array(data, None, colored_points=colored_points, reset_cursor=reset_cursor)
-            #     reset_cursor = True
-
-    return graph
+    return min_val
 
 
 def main(test: bool = None, print_: bool = None):
@@ -215,17 +115,17 @@ def main(test: bool = None, print_: bool = None):
     if print_ is not None:
         args.print = print_
 
+    print(args)
+
     curr_dir = Path(__file__).parent.absolute()
 
     data = get_data(curr_dir, args.test).splitlines()
     data = np.array([list(map(int, line)) for line in data])
 
-    graph = convert_grid_to_graph(data)
-
-    shortest_path = find_shortest_path(graph, data)
+    shortest_path = find_shortest_path(data)
 
     print(f"Shortest path: {shortest_path}")
 
 
 if __name__ == "__main__":
-    main(test=True, print_=True)
+    main()
