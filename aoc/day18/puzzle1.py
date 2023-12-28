@@ -57,56 +57,6 @@ def convert_grid(grid: np.ndarray):
     return new_grid
 
 
-def get_converted_row(row: np.ndarray):
-    orig_row = row.copy()
-    first_col = first_nonzero_col(row)
-    last_col = last_nonzero_col(row)
-    row = row[first_col : last_col + 1]
-
-    contig_arrays = []
-
-    curr_array = []
-    for val in row:
-        if len(curr_array) == 0:
-            curr_array.append(val)
-            continue
-
-        if val == curr_array[-1]:
-            curr_array.append(val)
-            continue
-
-        if val != curr_array[-1]:
-            contig_arrays.append(curr_array)
-            curr_array = [val]
-            continue
-
-    if len(curr_array) > 0:
-        contig_arrays.append(curr_array)
-
-    num_active_arrays = len([c for c in contig_arrays if c[0] == 1])
-    # If there's only one contiguous array, we don't need to do anything
-    if num_active_arrays == 1:
-        return orig_row
-
-    within = False
-    for i, array in enumerate(contig_arrays):
-        if num_active_arrays % 2 != 0 and i == 0:
-            continue
-        if array[0] == 1:
-            within = not within
-            continue
-
-        if within:
-            contig_arrays[i] = [1] * len(array)
-
-    reassembled = []
-    for array in contig_arrays:
-        reassembled.extend(array)
-
-    reassembled = [0] * first_col + reassembled + [0] * (len(orig_row) - last_col - 1)
-    return reassembled
-
-
 def move_direction(curr_loc: tuple[int, int], direction: Direction):
     return (curr_loc[0] + direction.value[0], curr_loc[1] + direction.value[1])
 
@@ -152,7 +102,11 @@ perform_flood_fill_from_edges(grid)
 
 print_colored_array(grid, colored_points=colored_points, reset_cursor=False)
 
-answer = np.count_nonzero(zeroes)
+ones_grid = np.zeros(grid.shape, dtype=int)
+ones_grid[grid == "#"] = 1
+ones_grid[grid == "."] = 1
+
+answer = np.sum(ones_grid)
 print(f"Answer: {answer}")
 
 if answer <= min(too_low_answers):
