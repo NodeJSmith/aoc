@@ -15,8 +15,13 @@ TEST_INPUT_FILE = "test_input"
 INPUT_FILE = "input"
 
 
+def point_in_bounds(point: tuple[int, int], arr: np.ndarray):
+    row, col = point  # Assuming the point is given as (row, column)
+    return 0 <= col < arr.shape[1] and 0 <= row < arr.shape[0]
+
+
 def point_out_of_bounds(point: tuple[int, int], data: np.ndarray):
-    return point[0] < 0 or point[1] < 0 or point[0] >= len(data[0]) or point[1] >= len(data)
+    return not point_in_bounds(point, data)
 
 
 def move_cursor_up(lines):
@@ -58,59 +63,11 @@ def print_colored_array(
     console.print(output)
 
 
-class Point:
-    def __hash__(self) -> int:
-        return hash((self.x, self.y))
-
-    def __init__(self, x: int, y: int, lines: Optional[list[str]] = None):
-        self.x = x
-        self.y = y
-        self.lines = lines
-
-    def __eq__(self, o: object) -> bool:
-        if isinstance(o, Point):
-            return self.x == o.x and self.y == o.y
-        elif isinstance(o, tuple):
-            return self.x == o[0] and self.y == o[1]
-
-    def __repr__(self) -> str:
-        return tuple((self.x, self.y)).__repr__()
-
-    def __sub__(self, o: object) -> "Point":
-        if not isinstance(o, Point):
-            raise TypeError(f"Cannot subtract {type(o)} from Point")
-        return Point(self.x - o.x, self.y - o.y, self.lines or o.lines)
-
-    def __add__(self, o: object) -> "Point":
-        if not isinstance(o, Point):
-            raise TypeError(f"Cannot add {type(o)} to Point")
-        if self.lines is None:
-            lines = o.lines
-        else:
-            lines = self.lines
-        return Point(self.x + o.x, self.y + o.y, lines)
-
-    def __getitem__(self, index):
-        return (self.x, self.y)[index]
-
-    def get_offset_point(self, direction: Union["Direction", "Point"]):
-        if isinstance(direction, Direction):
-            return self + direction.value
-        elif isinstance(direction, Point):
-            return self + direction
-        else:
-            raise TypeError(f"Cannot add {type(direction)} to Point")
-
-    @property
-    def char(self):
-        return self.lines[self.y][self.x]
-
-
 class Direction(Enum):
-    UP = Point(0, -1)
-    DOWN = Point(0, 1)
-    LEFT = Point(-1, 0)
-    RIGHT = Point(1, 0)
+    UP = (0, -1)
+    DOWN = (0, 1)
+    LEFT = (-1, 0)
+    RIGHT = (1, 0)
 
 
 def get_data(data_dir: str | Path, test: bool = False):
@@ -217,3 +174,59 @@ def flip_rows_to_cols(lines: list[list[str]]):
             new_line.append(lines[row][col])
         new_lines.append(new_line)
     return new_lines
+
+
+def first_nonzero_row(arr: np.ndarray):
+    # find smallest non-zero row
+    smallest_row = 0
+    for row in range(arr.shape[0]):
+        if np.sum(arr[row, :]) > 0:
+            smallest_row = row
+            break
+    return smallest_row
+
+
+def first_nonzero_col(arr: np.ndarray):
+    # find smallest non-zero column
+    smallest_col = 0
+
+    if len(arr.shape) == 1:
+        for col in range(arr.shape[0]):
+            if bool(arr[col]):
+                smallest_col = col
+                break
+        return smallest_col
+
+    for col in range(arr.shape[1]):
+        if np.count_nonzero(arr[:, col]) > 0:
+            smallest_col = col
+            break
+    return smallest_col
+
+
+def last_nonzero_row(arr: np.ndarray):
+    # find largest non-zero row
+    largest_row = 0
+    for row in range(arr.shape[0] - 1, 0, -1):
+        if np.sum(arr[row, :]) > 0:
+            largest_row = row
+            break
+    return largest_row
+
+
+def last_nonzero_col(arr: np.ndarray):
+    # find largest non-zero column
+    largest_col = 0
+
+    if len(arr.shape) == 1:
+        for col in range(arr.shape[0] - 1, 0, -1):
+            if arr[col] > 0:
+                largest_col = col
+                break
+        return largest_col
+
+    for col in range(arr.shape[1] - 1, 0, -1):
+        if np.sum(arr[:, col]) > 0:
+            largest_col = col
+            break
+    return largest_col
