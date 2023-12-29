@@ -69,46 +69,42 @@ for line in workflow_lines:
 graph = nx.DiGraph()
 red_edges = []
 black_edges = []
-w_queue = [(WORKFLOWS["in"], 0)]
+w_queue = [(WORKFLOWS["in"].name, 0)]
 while w_queue:
-    workflow, layer = w_queue.pop(0)
+    curr, layer = w_queue.pop(0)
 
-    for r in workflow.rules:
-        if r.destination not in ["A", "R"]:
-            next_dest = WORKFLOWS[r.destination]
-            black_edges.append((workflow, next_dest))
-            graph.add_edge(workflow, next_dest, layer=layer)
-            w_queue.append((WORKFLOWS[r.destination], layer + 1))
+    if curr in [ACCEPT, REJECT]:
+        continue
+
+    workflow = WORKFLOWS[curr]
+    destinations = [r.destination for r in workflow.rules] + [workflow.default]
+    for dest in destinations:
+        graph_layer = -1 * layer
+        graph.add_node(curr, layer=graph_layer)
+        graph.add_node(dest, layer=(graph_layer - 1))
+        graph.add_edge(curr, dest)
+
+        if dest in WORKFLOWS:
+            w_queue.append((WORKFLOWS[dest].name, layer + 1))
         else:
-            red_edges.append((workflow, r.destination))
-            graph.add_edge(workflow, r.destination, layer=layer)
-
-        if workflow.default not in ["A", "R"]:
-            next_dest = WORKFLOWS[workflow.default]
-            black_edges.append((workflow, next_dest))
-            graph.add_edge(workflow, next_dest, layer=layer)
-            w_queue.append((WORKFLOWS[workflow.default], layer + 1))
-        else:
-            red_edges.append((workflow, workflow.default))
-            graph.add_edge(workflow, workflow.default, layer=layer)
-
-
-for p in PATHS:
-    print(p)
+            w_queue.append((dest, layer + 1))
 
 
 # any path that ends at R should be red
 # any path that ends at A should be black
 
-# red_edges = [p for p in PATHS if p[1] == "R"]
-# black_edges = [p for p in PATHS if p[1] == "A"]
-# edge_colours = ["black" if not edge in red_edges else "red" for edge in graph.edges()]
+
+def get_colored_edges(graph: nx.DiGraph, start: str, end: str) -> list[tuple[str, str]]:
+    colored_edges = []
+    for path in nx.all_simple_paths(graph, start, end):
+        for i in range(len(path) - 1):
+            colored_edges.append((path[i], path[i + 1]))
+
+    return colored_edges
 
 
-# edge_colours = ['black' if not edge in red_edges else 'red'
-#                 for edge in G.edges()]
-# black_edges = [edge for edge in G.edges() if edge not in red_edges]
-
+black_edges = get_colored_edges(graph, "in", ACCEPT)
+red_edges = get_colored_edges(graph, "in", REJECT)
 
 pos = nx.multipartite_layout(graph, subset_key="layer", align="horizontal")
 nx.draw_networkx_nodes(graph, pos, node_size=500)
