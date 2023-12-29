@@ -1,16 +1,24 @@
+# i get by with a little help from my friends
+# https://github.com/stefanoandroni/advent-of-code/blob/master/2023/day-19/part-2/main.py
+
+from copy import deepcopy
 from pathlib import Path
 
-import matplotlib.pyplot as plt
-import networkx as nx
 from attrs import define, field
 
 from aoc_utils import get_data
 
 WORKFLOWS: dict[str, "Workflow"] = {}
+
 ACCEPT = "A"
 REJECT = "R"
+RULE_MIN = 1
+RULE_MAX = 4000
 
-PATHS = []
+
+@define
+class DefaultRule:
+    destination: str
 
 
 @define
@@ -25,26 +33,20 @@ class Rule:
 class Workflow:
     name: str
     default: str
-    rules: list[Rule] = field(factory=list, repr=False)
-
-    def __hash__(self) -> int:
-        return hash(self.name)
-
-    def __repr__(self) -> str:
-        return self.name
+    rules: list[Rule] = field(factory=list)
 
 
 curr_dir = Path(__file__).parent.absolute()
 
-data = get_data(curr_dir, True).splitlines()
+data = get_data(curr_dir, False).splitlines()
 workflow_lines: list[str] = []
 
 
 for line in data:
     if not line:
         break
-
     workflow_lines.append(line)
+
 
 for line in workflow_lines:
     print(line)
@@ -63,53 +65,70 @@ for line in workflow_lines:
         rule = Rule(_attr, _op, _val, _dest)
         workflow.rules.append(rule)
 
+    workflow.rules.append(DefaultRule(default))
+
     WORKFLOWS[workflow_name] = workflow
 
 
-graph = nx.DiGraph()
-red_edges = []
-black_edges = []
-w_queue = [(WORKFLOWS["in"].name, 0)]
-while w_queue:
-    curr, layer = w_queue.pop(0)
+def get_product(range_dict: dict[str, tuple[int, int]]) -> int:
+    combo = 1
+    for _, v in range_dict.items():
+        start, end = v
+        combo *= end - start + 1
+    return combo
 
-    if curr in [ACCEPT, REJECT]:
-        continue
 
-    workflow = WORKFLOWS[curr]
-    destinations = [r.destination for r in workflow.rules] + [workflow.default]
-    for dest in destinations:
-        graph_layer = -1 * layer
-        graph.add_node(curr, layer=graph_layer)
-        graph.add_node(dest, layer=(graph_layer - 1))
-        graph.add_edge(curr, dest)
+start_ranges = {_: (RULE_MIN, RULE_MAX) for _ in ["x", "m", "a", "s"]}
 
-        if dest in WORKFLOWS:
-            w_queue.append((WORKFLOWS[dest].name, layer + 1))
+
+def get_combos(curr_range: dict[str, tuple[int, int]], workflow_name: str) -> int:
+    total = 0
+
+    if workflow_name == REJECT:
+        return 0
+
+    if workflow_name == ACCEPT:
+        total += get_product(curr_range)
+        return total
+
+    curr_workflow = WORKFLOWS[workflow_name]
+
+    for rule in curr_workflow.rules:
+        if isinstance(rule, DefaultRule):
+            total += get_combos(curr_range, rule.destination)
+            continue
+
+        attr = rule.attr
+        curr_start, curr_stop = curr_range[attr]
+
+        # does the same as below but less readable
+        # accept_range = rule.range_accepted(curr_range[attr])
+        if rule.operator == "<":
+            # true_portion = accept_range
+            true_portion = (curr_start, rule.value - 1)
+            false_portion = (rule.value, curr_stop)
         else:
-            w_queue.append((dest, layer + 1))
+            # true_portion = accept_range
+            true_portion = (rule.value + 1, curr_stop)
+            false_portion = (curr_start, rule.value)
+
+        assert true_portion[0] <= true_portion[-1], f"True portion is invalid: {true_portion}"
+        assert false_portion[0] <= false_portion[-1], f"False portion is invalid: {false_portion}"
+
+        # pass a copy of the range so we don't modify the original
+        copy_range = deepcopy(curr_range)
+        copy_range[attr] = true_portion
+        total += get_combos(copy_range, rule.destination)
+
+        # the above lines followed the true portion of the rule
+        # so now we modify in place to set the false portion
+        curr_range[attr] = false_portion
+
+    print(f"Total: {total:,}")
+    return total
 
 
-# any path that ends at R should be red
-# any path that ends at A should be black
+total_combo = get_combos(start_ranges, "in")
 
 
-def get_colored_edges(graph: nx.DiGraph, start: str, end: str) -> list[tuple[str, str]]:
-    colored_edges = []
-    for path in nx.all_simple_paths(graph, start, end):
-        for i in range(len(path) - 1):
-            colored_edges.append((path[i], path[i + 1]))
-
-    return colored_edges
-
-
-black_edges = get_colored_edges(graph, "in", ACCEPT)
-red_edges = get_colored_edges(graph, "in", REJECT)
-
-pos = nx.multipartite_layout(graph, subset_key="layer", align="horizontal")
-nx.draw_networkx_nodes(graph, pos, node_size=500)
-nx.draw_networkx_labels(graph, pos)
-
-nx.draw_networkx_edges(graph, pos, edgelist=red_edges, edge_color="r", arrows=True)
-nx.draw_networkx_edges(graph, pos, edgelist=black_edges, arrows=True)
-plt.show()
+print(total_combo)
