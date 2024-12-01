@@ -13,3 +13,4 @@ test_input.txt
 grid_output.png
 *.ignore
 .venv
+scratch*.py
