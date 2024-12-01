@@ -2,7 +2,6 @@ import sys
 from copy import deepcopy
 from enum import Enum
 from pathlib import Path
-from typing import Optional, Union
 
 import numpy as np
 from rich.console import Console
@@ -54,7 +53,11 @@ def print_colored_array(
             value = str(array[y, x])
             if point in colored_points:
                 output.append(value, style=f"bold {colored_points[point]}")
-            elif grid is not None and not point_out_of_bounds(point, grid) and grid[point] == 1:
+            elif (
+                grid is not None
+                and not point_out_of_bounds(point, grid)
+                and grid[point] == 1
+            ):
                 output.append(value, style="bold blue")
             else:
                 output.append(value)
@@ -91,7 +94,12 @@ def line_to_list(line: str):
     return list(line)
 
 
-def print_char(curr_pos, lines, wide_mode: bool = False, highlights: dict[tuple[int, int], str] = None):
+def print_char(
+    curr_pos,
+    lines,
+    wide_mode: bool = False,
+    highlights: dict[tuple[int, int], str] = None,
+):
     col, row = curr_pos
 
     if not highlights:
@@ -136,7 +144,9 @@ def print_lines(
             row_char = get_index_val(row)
             line.insert(0, f"{row_char}")  # type: ignore
 
-        col_line = [" "] + [f"{get_index_val(i)}" for i in range(len(copied_lines[0]) - 1)]
+        col_line = [" "] + [
+            f"{get_index_val(i)}" for i in range(len(copied_lines[0]) - 1)
+        ]
         copied_lines.insert(0, col_line)
 
         adjusted_highlights = {}
@@ -149,8 +159,13 @@ def print_lines(
 
     for row in range(0, len(copied_lines)):
         for col in range(0, len(copied_lines[0])):
-            curr_pos = Point(col, row)
-            print_char(curr_pos=curr_pos, lines=copied_lines, wide_mode=wide_mode, highlights=adjusted_highlights)
+            curr_pos = (col, row)
+            print_char(
+                curr_pos=curr_pos,
+                lines=copied_lines,
+                wide_mode=wide_mode,
+                highlights=adjusted_highlights,
+            )
 
         print()  # New line at the end of each row
 
