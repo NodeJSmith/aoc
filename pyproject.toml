@@ -1,10 +1,18 @@
 [project]
-name = "aoc_utils"
+name = "aoc_helper"
 version = "0.0.1"
-description = "AOC utils"
+description = "AOC helper"
 requires-python = ">=3.10"
-dependencies = ["rich", "requests"]
-
+dependencies = [
+    "Levenshtein==0.23.0",
+    "networkx==3.2.1",
+    "nodeenv==1.8.0",
+    "numpy==1.26.2",
+    "Pillow==10.1.0",
+    "rich==13.7.0",
+    "tqdm==4.66.1",
+    "attrs==24.2.0",
+]
 
 [tool.setuptools]
 package-dir = { "" = "src" }
