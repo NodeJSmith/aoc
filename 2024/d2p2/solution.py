@@ -27,10 +27,7 @@ def subreport_is_safe(report: list[int]):
         return False
 
     diffs = [abs(b - a) for a, b in pairwise(report)]
-    if max(diffs) > 3:
-        return False
-
-    return True
+    return not max(diffs) > 3
 
 
 def report_is_safe(report: list[int]):
