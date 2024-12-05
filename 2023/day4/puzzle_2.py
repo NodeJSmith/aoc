@@ -1,6 +1,6 @@
+from collections import Counter
 from copy import copy
 from pathlib import Path
-from typing import Counter
 
 TEST = False
 

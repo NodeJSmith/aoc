@@ -17,13 +17,10 @@ EXPECTED_TEST_RESULT = 281
 
 def get_input_data(test: bool = False) -> list[tuple[str, str]]:
     curr_dir = Path(__file__).parent
-    if test:
-        input_file = curr_dir / "test_input.txt"
-    else:
-        input_file = curr_dir / "input.txt"
+    input_file = curr_dir / "test_input.txt" if test else curr_dir / "input.txt"
 
     new_lines: list[str] = []
-    with open(input_file, "r") as f:
+    with open(input_file) as f:
         lines = f.readlines()
         lines = [line.strip() for line in lines]
         for line in lines:

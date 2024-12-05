@@ -26,7 +26,7 @@ def get_differences_lists(numbers: list, differences_list: list[list[int]] | Non
     diffs = [numbers[i + 1] - numbers[i] for i in range(len(numbers) - 1)]
     differences_list.append(diffs)
 
-    if not all([x == 0 for x in diffs]):
+    if not all(x == 0 for x in diffs):
         get_differences_lists(diffs, differences_list)
 
     return differences_list

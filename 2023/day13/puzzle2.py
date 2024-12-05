@@ -1,9 +1,8 @@
 from copy import deepcopy
 from pathlib import Path
 
-from Levenshtein import distance
-
 from aoc_utils import get_data, line_to_list
+from Levenshtein import distance
 
 TEST = False
 
@@ -48,10 +47,7 @@ def find_reflection_simple(lines):
     lines = deepcopy(lines)
 
     actual_len = len(lines)
-    if actual_len % 2 != 0:
-        even_len = actual_len - 1
-    else:
-        even_len = actual_len
+    even_len = actual_len - 1 if actual_len % 2 != 0 else actual_len
 
     for i in range(2):
         first_half_tuple = (i, (even_len // 2) + i)
@@ -62,6 +58,7 @@ def find_reflection_simple(lines):
 
         if first_half == list(reversed(second_half)):
             return first_half_tuple[1]
+    return None
 
 
 class SmudgeChecker:
@@ -95,9 +92,7 @@ class SmudgeChecker:
                     return False
             except IndexError:
                 break
-        if not self.smudge_fixed:
-            return False
-        return True
+        return self.smudge_fixed
 
     def fix_smudge(self, i, j):
         assert not self.smudge_fixed
@@ -125,10 +120,7 @@ class SmudgeChecker:
                 distances.append(curr_distance)
                 distance_map[(i, j)] = curr_distance
 
-        if not distances:
-            min_distance = 0
-        else:
-            min_distance = min(distances)
+        min_distance = 0 if not distances else min(distances)
 
         # print(min_distance)
         return min_distance
@@ -147,6 +139,7 @@ class SmudgeChecker:
             if s1 == s2:
                 if self.check_outward(i, i + 1):
                     return i + 1
+        return None
 
 
 def main():

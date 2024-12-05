@@ -2,9 +2,8 @@ import re
 from collections import defaultdict
 from pathlib import Path
 
-from attrs import define, field
-
 from aoc_utils import get_data
+from attrs import define, field
 
 WORKFLOWS: dict[str, "Workflow"] = {}
 RESULTS: dict[str, list["Part"]] = defaultdict(list)
@@ -40,6 +39,7 @@ class Rule:
             return item.__getattribute__(self.attr) == self.value
         if self.operator == "!":
             return item.__getattribute__(self.attr) != self.value
+        return None
 
 
 @define

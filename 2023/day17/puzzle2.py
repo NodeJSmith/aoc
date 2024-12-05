@@ -5,7 +5,6 @@ from heapq import heappop, heappush
 from pathlib import Path
 
 import numpy as np
-
 from aoc_utils import get_data, point_out_of_bounds, print_colored_array
 
 parser = ArgumentParser()
@@ -88,7 +87,6 @@ def get_min_heat_loss(data: np.ndarray, source: tuple[int, int], target: tuple[i
             reset_cursor = True
 
         next_moves = get_next_moves(direction, consecutive)
-        noop = "noop"
         for new_direction, new_consecutive in next_moves:
             neighbor = tuple(np.add(curr_node, new_direction))
             if point_out_of_bounds(neighbor, data):
@@ -101,6 +99,7 @@ def get_min_heat_loss(data: np.ndarray, source: tuple[int, int], target: tuple[i
                 tracked[new_item] = new_heat_loss
                 path[new_item] = curr_item
                 push(queue, (new_heat_loss, *new_item))
+    return None
 
 
 def print_path(data, path, reset_cursor, curr_node, direction, consecutive):
@@ -123,7 +122,7 @@ def find_shortest_path(data: np.ndarray):
     return min_val
 
 
-def main(test: bool = None, print_: bool = None):
+def main(test: bool | None = None, print_: bool | None = None):
     if test is not None:
         args.test = test
 

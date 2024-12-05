@@ -3,7 +3,7 @@ from pathlib import Path
 curr_dir = Path(__file__).parent
 input_file = curr_dir / "input.txt"
 
-with open(input_file, "r") as f:
+with open(input_file) as f:
     lines = f.readlines()
 
 

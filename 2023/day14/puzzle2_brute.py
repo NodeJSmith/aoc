@@ -1,12 +1,11 @@
 from collections import defaultdict
-from functools import lru_cache
+from functools import cache
 from pathlib import Path
 from typing import Literal
 
+from aoc_utils import get_data, line_to_list, print_lines
 from numpy.typing import ArrayLike
 from tqdm import tqdm
-
-from aoc_utils import get_data, line_to_list, print_lines
 
 TEST = False
 global_idx = 0
@@ -21,7 +20,7 @@ def tuple_of_tuples_to_lists(lines: tuple[tuple[str, ...], ...]):
     return list(map(list, lines))
 
 
-@lru_cache(maxsize=None)
+@cache
 def transpose_lines(lines: list[list[str]]):
     new_lines = []
     for col in range(len(lines[0])):
@@ -32,7 +31,7 @@ def transpose_lines(lines: list[list[str]]):
     return list_of_lists_to_tuples(new_lines)
 
 
-@lru_cache(maxsize=None)
+@cache
 def adjust_piece(line: str, direction: Literal["left", "right"]):
     line = line_to_list(line)
     if "O" not in line:
@@ -58,7 +57,7 @@ def adjust_piece(line: str, direction: Literal["left", "right"]):
     return piece1 + piece2
 
 
-@lru_cache(maxsize=None)
+@cache
 def tilt_lines(lines: ArrayLike, cardinal_direction: str):
     if cardinal_direction.lower() in ["north", "south"]:
         lines = transpose_lines(lines)
@@ -78,7 +77,7 @@ def tilt_lines(lines: ArrayLike, cardinal_direction: str):
     return list_of_lists_to_tuples(lines)
 
 
-@lru_cache(maxsize=None)
+@cache
 def full_tilt(lines: ArrayLike):
     lines = list_of_lists_to_tuples(lines)
     lines = tilt_lines(lines, "north")

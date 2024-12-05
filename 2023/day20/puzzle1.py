@@ -70,12 +70,11 @@ class Module:
     def create(cls, name, targets: list[str]):
         if name[0] == ModuleType.FLIP_FLOP.value:
             return FlipFlopModule(name, targets)
-        elif name[0] == ModuleType.CONJUNCTION.value:
+        if name[0] == ModuleType.CONJUNCTION.value:
             return ConjunctionModule(name, targets)
-        elif name == "broadcaster":
+        if name == "broadcaster":
             return BroadcasterModule(name, targets)
-        else:
-            return Module(name, targets)
+        return Module(name, targets)
 
 
 class FlipFlopModule(Module):
@@ -89,15 +88,14 @@ class FlipFlopModule(Module):
     def receive_pulse(self, input_module: str, pulse: Pulse) -> Pulse | None:
         super().receive_pulse(input_module, pulse)
         if pulse == Pulse.HI:
-            return
+            return None
 
         initial_state = self.state
         self.state = State(not self.state.value)
 
         if initial_state == State.OFF:
             return Pulse.HI
-        else:
-            return Pulse.LO
+        return Pulse.LO
 
 
 class ConjunctionModule(Module):
@@ -112,7 +110,7 @@ class ConjunctionModule(Module):
         super().receive_pulse(input_module, pulse)
         self.inputs[input_module] = pulse
 
-        if all([x == Pulse.HI for x in self.inputs.values()]):
+        if all(x == Pulse.HI for x in self.inputs.values()):
             return Pulse.LO
 
         return Pulse.HI

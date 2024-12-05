@@ -22,8 +22,9 @@ def get_input_file(test: bool = TEST):
 def advance_node(curr_node, direction, nodes):
     if direction == "L":
         return nodes[curr_node][0]
-    elif direction == "R":
+    if direction == "R":
         return nodes[curr_node][1]
+    return None
 
 
 lines = get_data().splitlines()
@@ -53,7 +54,7 @@ for i in tqdm(repeat(1)):
     steps_taken += 1
     curr_step += 1
 
-    if all([x.endswith("Z") for x in current_nodes]):
+    if all(x.endswith("Z") for x in current_nodes):
         break
 
     if curr_step == len(directions):

@@ -4,9 +4,8 @@
 from copy import deepcopy
 from pathlib import Path
 
-from attrs import define, field
-
 from aoc_utils import get_data
+from attrs import define, field
 
 WORKFLOWS: dict[str, "Workflow"] = {}
 

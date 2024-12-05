@@ -1,7 +1,6 @@
 from pathlib import Path
 
 import numpy as np
-
 from aoc_utils import (
     Direction,
     first_nonzero_col,

@@ -39,10 +39,7 @@ def find_reflection_simple(lines):
     lines = deepcopy(lines)
 
     actual_len = len(lines)
-    if actual_len % 2 != 0:
-        even_len = actual_len - 1
-    else:
-        even_len = actual_len
+    even_len = actual_len - 1 if actual_len % 2 != 0 else actual_len
 
     for i in range(2):
         first_half_tuple = (i, (even_len // 2) + i)
@@ -53,6 +50,7 @@ def find_reflection_simple(lines):
 
         if first_half == list(reversed(second_half)):
             return first_half_tuple[1]
+    return None
 
 
 def check_outward(lines, first_idx, second_idx):
@@ -85,6 +83,7 @@ def find_reflection(lines):
         if lines[i] == lines[i + 1]:
             if check_outward(lines, i, i + 1):
                 return i + 1
+    return None
 
 
 def get_groups(lines):

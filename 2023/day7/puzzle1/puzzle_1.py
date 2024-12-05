@@ -52,6 +52,7 @@ class Hand:
         for i in range(len(self.cards)):
             if self.cards[i].value != other.cards[i].value:
                 return self.cards[i] < other.cards[i]
+        return None
 
     @property
     def hand_type(self):

@@ -5,7 +5,6 @@ from pathlib import Path
 from time import sleep
 
 import numpy as np
-
 from aoc_utils import get_data, print_colored_array
 
 parser = ArgumentParser()
@@ -67,11 +66,11 @@ TRACKED_POINTS = set()
 def move(data: np.ndarray, grid: np.ndarray, curr_point: tuple[int, int], curr_direction: Direction):
     # handle out of bounds
     if curr_point[0] < 0 or curr_point[1] < 0 or curr_point[0] >= len(data[0]) or curr_point[1] >= len(data):
-        return
+        return None
 
     # handle infinite loop
     if (curr_point, curr_direction.value) in TRACKED_POINTS:
-        return
+        return None
 
     TRACKED_POINTS.add((curr_point, curr_direction.value))
 
@@ -90,6 +89,7 @@ def move(data: np.ndarray, grid: np.ndarray, curr_point: tuple[int, int], curr_d
     grid[curr_point] = 1
     for movement in CHAR_MAP[char_type][curr_direction]:
         move(data, grid, tuple(np.array(curr_point) + movement.value), movement)
+    return None
 
 
 def main():

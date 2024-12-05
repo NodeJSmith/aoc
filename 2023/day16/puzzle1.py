@@ -4,7 +4,6 @@ from enum import Enum
 from pathlib import Path
 
 import numpy as np
-
 from aoc_utils import get_data, print_colored_array
 
 parser = ArgumentParser()

@@ -41,11 +41,11 @@ def print_lines(lines: list[str] | list[list[str]]):
 
 
 def row_has_no_galaxy(lines: list[list[str]], row: int):
-    return not any([char == "#" or char.isdigit() for char in lines[row]])
+    return not any(char == "#" or char.isdigit() for char in lines[row])
 
 
 def col_has_no_galaxy(lines: list[list[str]], col: int):
-    return not any([line[col] == "#" or line[col].isdigit() for line in lines])
+    return not any(line[col] == "#" or line[col].isdigit() for line in lines)
 
 
 def get_rows_without_galaxy(lines: list[list[str]]):
@@ -99,7 +99,7 @@ def adjust_points(points: dict[int, tuple[int, int]], rows: list[int], cols: lis
     return new_points
 
 
-def main(lines: list[list[str]] = None):
+def main(lines: list[list[str]] | None = None):
     print_lines(lines)
 
     # expand_galaxy(lines)

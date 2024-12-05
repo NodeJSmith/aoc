@@ -71,6 +71,7 @@ class Hand:
         for i in range(len(self.cards)):
             if self.original_cards[i] != other.original_cards[i]:
                 return self.original_cards[i] < other.original_cards[i]
+        return None
 
     @staticmethod
     def get_hand_type(cards: list[Card]):
@@ -112,14 +113,14 @@ def improve_hand(hand: Hand):
         hand.cards = [Card("A") for _ in range(5)]
         hand.hand_type = Hand.get_hand_type(hand.cards)
         return hand
-    elif len(wildcards) == 4:
+    if len(wildcards) == 4:
         for i, c in enumerate(hand.cards):
             if c != "J":
                 continue
             hand.cards[i] = Card(non_wildcards[0].value)
         hand.hand_type = Hand.get_hand_type(hand.cards)
         return hand
-    elif len(wildcards) == 3:
+    if len(wildcards) == 3:
         max_val = max(non_wildcards).value
         for i, c in enumerate(hand.cards):
             if c != "J":

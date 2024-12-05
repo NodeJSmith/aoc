@@ -3,7 +3,7 @@ import sys
 from collections import deque
 from enum import Enum
 from pathlib import Path
-from typing import Optional, Union
+from typing import Union
 
 from PIL import Image, ImageDraw, ImageFont
 from rich.console import Console
@@ -57,7 +57,7 @@ class Point:
     def __hash__(self) -> int:
         return hash((self.x, self.y))
 
-    def __init__(self, x: int, y: int, lines: Optional[list[str]] = None):
+    def __init__(self, x: int, y: int, lines: list[str] | None = None):
         self.x = x
         self.y = y
         self.lines = lines
@@ -65,8 +65,9 @@ class Point:
     def __eq__(self, o: object) -> bool:
         if isinstance(o, Point):
             return self.x == o.x and self.y == o.y
-        elif isinstance(o, tuple):
+        if isinstance(o, tuple):
             return self.x == o[0] and self.y == o[1]
+        return None
 
     def __repr__(self) -> str:
         return tuple((self.x, self.y)).__repr__()
@@ -79,10 +80,7 @@ class Point:
     def __add__(self, o: object) -> "Point":
         if not isinstance(o, Point):
             raise TypeError(f"Cannot add {type(o)} to Point")
-        if self.lines is None:
-            lines = o.lines
-        else:
-            lines = self.lines
+        lines = o.lines if self.lines is None else self.lines
         return Point(self.x + o.x, self.y + o.y, lines)
 
     def __getitem__(self, index):
@@ -91,10 +89,9 @@ class Point:
     def get_offset_point(self, direction: Union["Direction", "Point"]):
         if isinstance(direction, Direction):
             return self + direction.value
-        elif isinstance(direction, Point):
+        if isinstance(direction, Point):
             return self + direction
-        else:
-            raise TypeError(f"Cannot add {type(direction)} to Point")
+        raise TypeError(f"Cannot add {type(direction)} to Point")
 
     @property
     def char(self):
@@ -198,6 +195,7 @@ def get_start_position(lines: list[str]) -> Point:
     for i, line in enumerate(lines):
         if "★" in line:
             return Point(line.index("★"), i, lines)
+    return None
 
 
 def get_opposite_direction(direction: Direction):
@@ -229,10 +227,7 @@ def can_proceed(lines: list[str], pos: Point, direction: Direction):
         return False
 
     pipe_map = PIPE_MAP[pos.char] if pos.char != "★" else PIPE_MAP[pipe_symbols[S]]
-    if offset_char in pipe_map.get(direction, []):
-        return True
-
-    return False
+    return offset_char in pipe_map.get(direction, [])
 
 
 def iterative_navigate(grid: list[list[str]], start_point: Point, prev_direction: Direction = None):
@@ -319,7 +314,7 @@ def create_image_from_grid_with_text(grid, tile_size=10, font_path=FONT_PATH):
     # Load a monospaced font
     try:
         font = ImageFont.truetype(font_path, tile_size)
-    except IOError:
+    except OSError:
         font = ImageFont.load_default()
 
     # Define colors for each type of tile
@@ -337,9 +332,7 @@ def create_image_from_grid_with_text(grid, tile_size=10, font_path=FONT_PATH):
                 char = pipe_symbols[S]
             if char == pipe_symbols["-"]:
                 char = char * 2
-            elif char == pipe_symbols["F"]:
-                char = char + pipe_symbols["-"]
-            elif char == pipe_symbols["L"]:
+            elif char == pipe_symbols["F"] or char == pipe_symbols["L"]:
                 char = char + pipe_symbols["-"]
             elif char == "~":
                 char = "█"

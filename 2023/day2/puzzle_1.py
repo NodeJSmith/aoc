@@ -16,7 +16,7 @@ for line in data:
     game_title, games = line.split(":")
     game_num = game_title.replace("Game ", "")
     iteration = games.split(";")
-    max_cubes = {k: 0 for k in NUM_CUBES.keys()}
+    max_cubes = {k: 0 for k in NUM_CUBES}
 
     for i in iteration:
         iteration_cubes = i.split(",")

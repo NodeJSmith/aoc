@@ -11,10 +11,7 @@ input_file = curr_dir / "input.txt"
 test_data = test_input_file.read_text().splitlines()
 real_data = input_file.read_text().splitlines()
 
-if TEST:
-    data = test_data
-else:
-    data = real_data
+data = test_data if TEST else real_data
 
 
 offsets = [(-1, 0), (-1, -1), (0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1)]
